@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
+import Mailgun from 'mailgun.js';
+import * as FormData from 'form-data';
 
 export interface EmailData {
   userName?: string;
@@ -32,36 +34,40 @@ export interface SendEmailOptions {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private sesClient: SESClient | null = null;
-  private readonly defaultFrom =
-    process.env.DEFAULT_FROM_EMAIL || 'noreply@example.com';
+  private mgClient: any | null = null;
+  private mailgunDomain: string | null = null;
+  private readonly defaultFrom: string;
   private readonly templatesPath = path.join(process.cwd(), 'src', 'templates');
 
-  constructor() {
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-    const nodeEnv = process.env.NODE_ENV;
+  constructor(private readonly configService: ConfigService) {
+    const mailgunApiKey = this.configService.get<string>('MAILGUN_API_KEY');
+    const mailgunDomain = this.configService.get<string>('MAILGUN_DOMAIN');
+    const mailgunBaseUrl = this.configService.get<string>('MAILGUN_BASE_URL');
+    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    this.defaultFrom =
+      this.configService.get<string>('DEFAULT_FROM_EMAIL') ||
+      'noreply@example.com';
 
-    if (nodeEnv === 'development' && (!accessKeyId || !secretAccessKey)) {
+    if (nodeEnv === 'development' && (!mailgunApiKey || !mailgunDomain)) {
       this.logger.warn(
-        'AWS credentials not configured. Running in development mode without AWS SES.',
+        'Mailgun is not fully configured. Running in development mode without external email sending.',
       );
       return;
     }
 
-    if (!accessKeyId || !secretAccessKey) {
+    if (!mailgunApiKey || !mailgunDomain) {
       throw new Error(
-        'AWS credentials are required: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY',
+        'Mailgun configuration is required: MAILGUN_API_KEY and MAILGUN_DOMAIN',
       );
     }
 
-    this.sesClient = new SESClient({
-      region: process.env.AWS_REGION || 'us-east-1',
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-      },
-    });
+    const mailgun = new Mailgun(FormData as any);
+    const clientOptions: any = { username: 'api', key: mailgunApiKey };
+    if (mailgunBaseUrl) {
+      clientOptions.url = mailgunBaseUrl;
+    }
+    this.mgClient = mailgun.client(clientOptions);
+    this.mailgunDomain = mailgunDomain;
   }
 
   private loadTemplate(templateName: string): string {
@@ -219,7 +225,7 @@ export class EmailService {
       const template = this.loadTemplate(options.template);
       const htmlContent = this.replaceTemplateVariables(template, options.data);
 
-      if (!this.sesClient) {
+      if (!this.mgClient || !this.mailgunDomain) {
         this.logger.log(
           'Development mode: Email would be sent to:',
           options.to,
@@ -235,29 +241,13 @@ export class EmailService {
 
       const recipients = Array.isArray(options.to) ? options.to : [options.to];
 
-      const command = new SendEmailCommand({
-        Source: options.from || this.defaultFrom,
-        Destination: {
-          ToAddresses: recipients,
-        },
-        Message: {
-          Subject: {
-            Data: options.subject,
-            Charset: 'UTF-8',
-          },
-          Body: {
-            Html: {
-              Data: htmlContent,
-              Charset: 'UTF-8',
-            },
-          },
-        },
+      const result = await this.mgClient.messages.create(this.mailgunDomain, {
+        from: options.from || this.defaultFrom,
+        to: recipients,
+        subject: options.subject,
+        html: htmlContent,
       });
-
-      const result = await this.sesClient.send(command);
-      this.logger.log(
-        `Email sent successfully. MessageId: ${result.MessageId}`,
-      );
+      this.logger.log(`Email sent successfully. Id: ${result.id}`);
     } catch (error) {
       this.logger.error('Failed to send email:', error);
       throw new Error(`Failed to send email: ${error.message}`);

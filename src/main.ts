@@ -19,7 +19,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Email Sender API')
-    .setDescription('API for sending emails via AWS SES with ready-made templates')
+    .setDescription('API for sending emails via Mailgun with ready-made templates')
     .setVersion('1.0')
     .addTag('email', 'Email operations')
     .build();
