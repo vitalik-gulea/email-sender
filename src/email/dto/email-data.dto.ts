@@ -31,5 +31,50 @@ export class EmailDataDto {
     @IsOptional()
     @IsString()
     supportPhone?: string;
+
+    @ApiProperty({ description: 'Company name', example: 'Test Company', required: false })
+    @IsOptional()
+    @IsString()
+    companyName?: string;
+
+    @ApiProperty({ description: 'First name', example: 'John', required: false })
+    @IsOptional()
+    @IsString()
+    firstName?: string;
+
+    @ApiProperty({ description: 'Last name', example: 'Doe', required: false })
+    @IsOptional()
+    @IsString()
+    lastName?: string;
+
+    @ApiProperty({ description: 'Contact email', example: 'contact@example.com', required: false })
+    @IsOptional()
+    @IsEmail()
+    contactEmail?: string;
+
+    @ApiProperty({ description: 'Contact phone', example: '+1 234-567-8900', required: false })
+    @IsOptional()
+    @IsString()
+    contactPhone?: string;
+
+    @ApiProperty({ description: 'MC Number', example: 'MC123456', required: false })
+    @IsOptional()
+    @IsString()
+    mcNumber?: string;
+
+    @ApiProperty({ description: 'DOT Number', example: '12345678', required: false })
+    @IsOptional()
+    @IsString()
+    dotNumber?: string;
+
+    @ApiProperty({ description: 'Fleet size', example: '50-100', required: false })
+    @IsOptional()
+    @IsString()
+    fleetSize?: string;
+
+    @ApiProperty({ description: 'Additional notes', example: 'Looking for a scalable ELD solution', required: false })
+    @IsOptional()
+    @IsString()
+    notes?: string;
   }
   

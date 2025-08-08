@@ -123,4 +123,50 @@ export class EmailController {
       );
     }
   }
+
+  @Post('admin/contact-sales')
+  @ApiOperation({ summary: 'Send admin notification about new contact sales request' })
+  @ApiResponse({
+    status: 200,
+    description: 'Admin contact sales notification sent successfully',
+  })
+  @ApiResponse({ status: 500, description: 'Email sending failed' })
+  @ApiBody({ type: QuickEmailDto })
+  async sendAdminContactSales(@Body() dto: QuickEmailDto) {
+    try {
+      await this.emailService.sendAdminContactSales(dto.to, dto.data || {});
+      return { message: 'Admin contact sales notification sent successfully' };
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Failed to send admin contact sales notification',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('admin/new-company')
+  @ApiOperation({ summary: 'Send admin notification about new company registration' })
+  @ApiResponse({
+    status: 200,
+    description: 'Admin new company notification sent successfully',
+  })
+  @ApiResponse({ status: 500, description: 'Email sending failed' })
+  @ApiBody({ type: QuickEmailDto })
+  async sendAdminNewCompany(@Body() dto: QuickEmailDto) {
+    try {
+      await this.emailService.sendAdminNewCompany(dto.to, dto.data || {});
+      return { message: 'Admin new company notification sent successfully' };
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Failed to send admin new company notification',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

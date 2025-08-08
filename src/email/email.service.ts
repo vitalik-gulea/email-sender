@@ -10,6 +10,15 @@ export interface EmailData {
   passwordLink?: string;
   supportEmail?: string;
   supportPhone?: string;
+  companyName?: string;
+  firstName?: string;
+  lastName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  mcNumber?: string;
+  dotNumber?: string;
+  fleetSize?: string;
+  notes?: string;
 }
 
 export interface SendEmailOptions {
@@ -132,6 +141,76 @@ export class EmailService {
       );
     }
 
+    if (data.companyName) {
+      processedTemplate = processedTemplate.replace(
+        /Test Company/g,
+        data.companyName,
+      );
+    }
+
+    if (data.firstName) {
+      processedTemplate = processedTemplate.replace(
+        /John(?!\s+Doe)/g,
+        data.firstName,
+      );
+    }
+
+    if (data.lastName) {
+      processedTemplate = processedTemplate.replace(
+        /Doe/g,
+        data.lastName,
+      );
+    }
+
+    if (data.firstName && data.lastName) {
+      processedTemplate = processedTemplate.replace(
+        /John Doe/g,
+        `${data.firstName} ${data.lastName}`,
+      );
+    }
+
+    if (data.contactEmail) {
+      processedTemplate = processedTemplate.replace(
+        /test@example\.com/g,
+        data.contactEmail,
+      );
+    }
+
+    if (data.contactPhone) {
+      processedTemplate = processedTemplate.replace(
+        /\+1 234-567-8900/g,
+        data.contactPhone,
+      );
+    }
+
+    if (data.mcNumber) {
+      processedTemplate = processedTemplate.replace(
+        /MC123456/g,
+        data.mcNumber,
+      );
+    }
+
+    if (data.dotNumber) {
+      processedTemplate = processedTemplate.replace(
+        /12345678/g,
+        data.dotNumber,
+      );
+    }
+
+    if (data.fleetSize) {
+      processedTemplate = processedTemplate.replace(
+        /50-100/g,
+        data.fleetSize,
+      );
+    }
+
+    if (data.notes) {
+      processedTemplate = processedTemplate.replace(
+        /Looking for a scalable ELD solution/g,
+        data.notes,
+      );
+    }
+
     return processedTemplate;
   }
 
@@ -226,6 +305,30 @@ export class EmailService {
       to,
       subject: 'Unfortunately, Your Account Could Not Be Approved',
       template: 'update-registration',
+      data,
+    });
+  }
+
+  async sendAdminContactSales(
+    to: string,
+    data: EmailData = {},
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: '📩 New Contact Sales Request Submitted',
+      template: 'admin-contact-sales',
+      data,
+    });
+  }
+
+  async sendAdminNewCompany(
+    to: string,
+    data: EmailData = {},
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: 'New Company Account Registration on Corelines',
+      template: 'admin-new-company',
       data,
     });
   }
